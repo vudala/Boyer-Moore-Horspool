@@ -12,7 +12,7 @@
 #define MAX_WORDSIZE 100
 
 // BHMS
-#define MAX_SUBSTRING 1099 // tamanho máximo de uma substring
+#define MAX_SUBSTRING 1001 // tamanho máximo de uma substring
 #define MAX_DATABASE 1000001 // tamanho da database
 #define DNA_SECTIONS 10 // quantas seções de dna serão analisadas
 
@@ -23,16 +23,16 @@ int bmhs(char *string, char *substr) {
 	int n = strlen(string);
 	int m = strlen(substr);
 
-	for (int j = 0; j < MAX; j++)
+	int i, j, k;
+	for (j = 0; j < MAX; j++)
 		d[j] = m + 1;
 
-	
-	for (int j = 0; j < m; j++)
+	for (j = 0; j < m; j++)
 		d[(int) substr[j]] = m - j;
 
-	for (int i = m - 1; i < n;){
-		int k = i;
-		int j = m - 1;
+	for (i = m - 1; i < n;){
+		k = i;
+		j = m - 1;
 		while ((j >= 0) && (string[k] == substr[j])) {
 			j--;
 			k--;
@@ -45,6 +45,7 @@ int bmhs(char *string, char *substr) {
 
 	return -1;
 }
+
 
 void remove_eol(char *line) {
 	int i = strlen(line) - 1;
@@ -64,6 +65,7 @@ void must_alloc(void *ptr, const char *desc){
 
 
 int main(void) {
+	// Inicializa as estruturas de memória que serão aproveitadas
 	FILE *fdatabase = fopen("inputs/dna.in", "r");
 	must_alloc(fdatabase, "fdatabase");
 
@@ -82,6 +84,7 @@ int main(void) {
 	char line[MAX_SUBSTRING], desc_dna[MAX_WORDSIZE];
 	int base_id = 0;
 
+	// Lê a database e a separa em databases menores
 	while (fgets(line, MAX_WORDSIZE, fdatabase)) {
 		remove_eol(line);
 		if (line[0] == '>'){
@@ -99,6 +102,7 @@ int main(void) {
 			strcat(bases[base_id-1], line);
 	}
 
+	// Lê as queries que serão realizadas e as armazena
 	char *str = (char*) malloc(sizeof(char) * MAX_SUBSTRING);
 	must_alloc(str, "str");
 
@@ -124,6 +128,10 @@ int main(void) {
 		}
 	}
 
+
+	/* Faz um paralelismo de dados nas queries lidas, utilizando uma estratégia de balanceamento dinâmico ou guiado
+
+	*/
 	#pragma omp parallel for schedule(dynamic)
 	for(int i = 0; i < query_id; i++){
 		fprintf(fout, "%s\n", queries_descs[i]);

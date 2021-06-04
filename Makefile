@@ -1,4 +1,6 @@
-FLAGS= -g -O3 -fopenmp
+FLAGS= -O3
+
+LIBS= -fopenmp -lm
 
 CC=gcc
 
@@ -6,14 +8,18 @@ RM=rm -f
 
 EXEC=dna
 
+OBJS = dna.o
+
 all: $(EXEC)
 
 $(EXEC):
-	$(CC) $(FLAGS) dna.c -c -o dna.o
-	$(CC) $(FLAGS) dna.o -o $(EXEC)
+	$(CC) $(FLAGS) dna.c -o $(EXEC) $(LIBS)
 
-run:
+run: all
 	./$(EXEC)
 
 clean:
-	$(RM) dna.o $(EXEC) dna.out
+	$(RM) dna.o  dna.out
+
+purge: clean
+	$(RM) $(EXEC)
