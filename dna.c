@@ -5,7 +5,8 @@
 
 // PROGRAM CONTROL
 #define FAILURE 1
-#define NUM_THREADS 4
+#define NUM_THREADS 8
+#define NUM_QUERIES 100000
 
 // MAX char table (ASCII)
 #define MAX 256
@@ -113,7 +114,7 @@ int main(void) {
 	must_alloc(queries_descs, "queries_descs");
 
 	int query_id = 0;
-	while (fgets(str, MAX_SUBSTRING, fquery)) {
+	while (fgets(str, MAX_SUBSTRING, fquery) && query_id < NUM_QUERIES) {
 		remove_eol(str);
 		if (str[0] == '>'){
 			queries_descs[query_id] = (char*) malloc(sizeof(char) * MAX_WORDSIZE);
@@ -129,25 +130,40 @@ int main(void) {
 	}
 
 
-	/* Faz um paralelismo de dados nas queries lidas, utilizando uma estratégia de balanceamento dinâmico ou guiado
+	char **query_results = (char**) malloc(sizeof(char*) * query_id);
+	must_alloc(queries_descs, "queries_descs");
 
-	*/
-	#pragma omp parallel for schedule(dynamic)
-	for(int i = 0; i < query_id; i++){
-		fprintf(fout, "%s\n", queries_descs[i]);
+	omp_set_dynamic(0);
+	#pragma omp parallel
+	{
+		int result, found;
+		char aux[MAX_WORDSIZE];
+		#pragma omp for schedule(dynamic)
+		for (int i = 0; i < query_id; i++)
+		{
+			found = 0;
+			query_results[i] = (char*) malloc(sizeof(char) * 10000);
+			sprintf(query_results[i], "%s\n", queries_descs[i]);
 
-		int found = 0;
-		for (int j = 0; j < base_id; j++){
-			int result = bmhs(bases[j], queries[i]);
-			if (result > 0) {
-				fprintf(fout, "%s\n%d\n", descs[j], result);
-				found++;
+			for (int j = 0; j < base_id; j++) {
+				result = bmhs(bases[j], queries[i]);
+				if (result > 0) {
+					sprintf(aux, "%s\n%i\n", descs[j], result);
+					strcat(query_results[i], aux);
+					found = 1;
+				}
+			}
+			if (!found) {
+				sprintf(aux, "NOT FOUND\n");
+				strcat(query_results[i], aux);
 			}
 		}
-
-		if (!found)
-			fprintf(fout, "NOT FOUND\n");
 	}
+
+	#pragma omp parallel for ordered schedule(static)
+	for (int i = 0; i < query_id; i++)
+		#pragma omp ordered
+		fprintf(fout, "%s", query_results[i]);
 
 	fclose(fdatabase);
 	fclose(fquery);
