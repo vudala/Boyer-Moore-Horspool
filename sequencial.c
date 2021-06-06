@@ -114,31 +114,14 @@ void read_database(FILE *file, char **bases, char **descs){
 }
 
 int main(void) {
-	FILE *fdatabase;
-	FILE *fquery ;
-	FILE *fout;
+    FILE *fdatabase = fopen("inputs/dna.in", "r");
+    must_alloc(fdatabase, "fdatabase");
 
-	#pragma omp parallel
-	{
-		#pragma omp single
-		{
-			#pragma omp task
-			{
-				fdatabase = fopen("inputs/dna.in", "r");
-				must_alloc(fdatabase, "fdatabase");
-			}
-			#pragma omp task
-			{
-				fquery = fopen("inputs/query.in", "r");
-				must_alloc(fquery, "fquery");
-			}
-			#pragma omp task
-			{
-				fout = fopen("dna.out", "w");
-				must_alloc(fout, "fout");
-			}
-		}
-	}
+    FILE *fquery = fopen("inputs/query.in", "r");
+    must_alloc(fquery, "fquery");
+
+    FILE *fout = fopen("dna.out", "w");
+    must_alloc(fout, "fout");
 
 	char *bases[DNA_SECTIONS];
 	char *descs[DNA_SECTIONS];
@@ -146,60 +129,43 @@ int main(void) {
 	char *queries[NUM_QUERIES];
 	char *queries_descs[NUM_QUERIES];
 
-	#pragma omp parallel
-	{
-		#pragma omp single
-		{
-			#pragma omp task
-			{read_database(fdatabase, bases, descs);}
-
-			#pragma omp task
-			{read_queries(fquery, queries, queries_descs);}
-		}
-	}
+	read_database(fdatabase, bases, descs);
+	read_queries(fquery, queries, queries_descs);
 
 	char *query_results[NUM_QUERIES];
 
-	omp_set_dynamic(0);
-	#pragma omp parallel
-	{
-		int result, found;
-		char aux[MAX_WORDSIZE];
-		#pragma omp for schedule(dynamic)
-		for (int i = 0; i < NUM_QUERIES; i++)
-		{
-			found = 0;
-			query_results[i] = (char*) malloc(sizeof(char) * 1000);
-			sprintf(query_results[i], "%s\n", queries_descs[i]);
+    int result, found;
+    char aux[MAX_WORDSIZE];
 
-			for (int j = 0; j < DNA_SECTIONS; j++) {
-				result = bmhs(bases[j], queries[i]);
-				if (result > 0) {
-					sprintf(aux, "%s\n%i\n", descs[j], result);
-					strcat(query_results[i], aux);
-					found = 1;
-				}
-			}
-			if (!found) {
-				sprintf(aux, "NOT FOUND\n");
-				strcat(query_results[i], aux);
-			}
-		}
-	}
+    for (int i = 0; i < NUM_QUERIES; i++){
+        found = 0;
+        query_results[i] = (char*) malloc(sizeof(char) * 1000);
+        sprintf(query_results[i], "%s\n", queries_descs[i]);
 
-	#pragma omp parallel for ordered schedule(static)
+        for (int j = 0; j < DNA_SECTIONS; j++) {
+            result = bmhs(bases[j], queries[i]);
+            if (result > 0) {
+                sprintf(aux, "%s\n%i\n", descs[j], result);
+                strcat(query_results[i], aux);
+                found = 1;
+            }
+        }
+        if (!found) {
+            sprintf(aux, "NOT FOUND\n");
+            strcat(query_results[i], aux);
+        }
+    }
+
 	for (int i = 0; i < NUM_QUERIES; i++)
 		#pragma omp ordered
 		fprintf(fout, "%s", query_results[i]);
-	
-	#pragma omp parallel for schedule(static)
+
 	for (int i = 0; i < NUM_QUERIES; i++){
 		free(queries[i]);
 		free(queries_descs[i]);
 		free(query_results[i]);
 	}
 
-	#pragma omp parallel for schedule(static)
 	for (int i = 0; i < DNA_SECTIONS; i++){
 		free(bases[i]);
 		free(descs[i]);

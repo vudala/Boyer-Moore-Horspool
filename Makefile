@@ -1,6 +1,6 @@
-FLAGS= -O3
+FLAGS=-O3
 
-LIBS= -fopenmp -lm
+LIBS=-fopenmp -lm
 
 CC=gcc
 

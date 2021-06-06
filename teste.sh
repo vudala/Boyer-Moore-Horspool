@@ -1,7 +1,7 @@
 export OMP_PROC_BIND=true
 export OMP_DYNAMIC=false
 
-END=30
+END=10
 testar () {
     export OMP_NUM_THREADS=$1
     SUM=0
