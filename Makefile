@@ -4,7 +4,7 @@ LIBS=-fopenmp -lm
 
 CC=gcc
 
-RM=rm
+RM=rm -f
 
 EXEC=dna
 
@@ -17,7 +17,7 @@ run: all
 	./$(EXEC)
 
 clean:
-	$(RM) dna.out
+	@$(RM) dna.out
 
 purge: clean
-	$(RM) $(EXEC)
+	@$(RM) $(EXEC)

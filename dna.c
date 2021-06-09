@@ -90,10 +90,10 @@ void read_database(FILE *file, char **bases, char **descs){
 
 
 int main(void) {
-	FILE *fdatabase = fopen("inputs/dna.in", "r");
+	FILE *fdatabase = fopen("dna.in", "r");
 	must_alloc(fdatabase, "fdatabase");
 
-	FILE *fquery = fopen("inputs/query.in", "r");
+	FILE *fquery = fopen("query.in", "r");
 	must_alloc(fquery, "fquery");
 
 	FILE *fout = fopen("dna.out", "w");
