@@ -2,24 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <omp.h>
+#include "utils.h"
 
-
-// PROGRAM CONTROL
-#define FAILURE 1
-#define NUM_THREADS 8
-#define NUM_QUERIES 100000
-
-
-// MAX char table (ASCII)
-#define MAX 256
-#define MAX_WORDSIZE 100
-
-
-// BHMS
+#define NUM_QUERIES 100000 // Quantas queries serão lidas
+#define MAX_WORDSIZE 100 // Tamanho máximo de uma string auxiliar
 #define MAX_SUBSTRING 1001 // Tamanho máximo de uma substring
 #define MAX_DATABASE 25000 // Tamanho da database
 #define DNA_SECTIONS 10 // Quantas seções de dna serão analisadas
 
+// MAX char table (ASCII)
+#define MAX 256
 
 // Boyers-Moore-Hospool-Sunday algorithm for string matching
 int bmhs(char *string, char *substr) {
@@ -48,23 +40,6 @@ int bmhs(char *string, char *substr) {
 	}
 
 	return -1;
-}
-
-
-void remove_eol(char *line) {
-	int i = strlen(line) - 1;
-	while (line[i] == '\n' || line[i] == '\r') {
-		line[i] = 0;
-		i--;
-	}
-}
-
-
-void must_alloc(void *ptr, const char *desc){
-	if (!ptr){
-		fprintf(stderr, "Malloc failure: %s", desc);
-		exit(FAILURE);
-	}
 }
 
 
@@ -113,32 +88,16 @@ void read_database(FILE *file, char **bases, char **descs){
     }
 }
 
-int main(void) {
-	FILE *fdatabase;
-	FILE *fquery ;
-	FILE *fout;
 
-	#pragma omp parallel
-	{
-		#pragma omp single
-		{
-			#pragma omp task
-			{
-				fdatabase = fopen("inputs/dna.in", "r");
-				must_alloc(fdatabase, "fdatabase");
-			}
-			#pragma omp task
-			{
-				fquery = fopen("inputs/query.in", "r");
-				must_alloc(fquery, "fquery");
-			}
-			#pragma omp task
-			{
-				fout = fopen("dna.out", "w");
-				must_alloc(fout, "fout");
-			}
-		}
-	}
+int main(void) {
+	FILE *fdatabase = fopen("inputs/dna.in", "r");
+	must_alloc(fdatabase, "fdatabase");
+
+	FILE *fquery = fopen("inputs/query.in", "r");
+	must_alloc(fquery, "fquery");
+
+	FILE *fout = fopen("dna.out", "w");
+	must_alloc(fout, "fout");
 
 	char *bases[DNA_SECTIONS];
 	char *descs[DNA_SECTIONS];
@@ -146,21 +105,11 @@ int main(void) {
 	char *queries[NUM_QUERIES];
 	char *queries_descs[NUM_QUERIES];
 
-	#pragma omp parallel
-	{
-		#pragma omp single
-		{
-			#pragma omp task
-			{read_database(fdatabase, bases, descs);}
-
-			#pragma omp task
-			{read_queries(fquery, queries, queries_descs);}
-		}
-	}
+	read_database(fdatabase, bases, descs);
+	read_queries(fquery, queries, queries_descs);
 
 	char *query_results[NUM_QUERIES];
 
-	omp_set_dynamic(0);
 	#pragma omp parallel
 	{
 		int result, found;
@@ -187,9 +136,7 @@ int main(void) {
 		}
 	}
 
-	#pragma omp parallel for ordered schedule(static)
 	for (int i = 0; i < NUM_QUERIES; i++)
-		#pragma omp ordered
 		fprintf(fout, "%s", query_results[i]);
 	
 	#pragma omp parallel for schedule(static)
@@ -204,7 +151,7 @@ int main(void) {
 		free(bases[i]);
 		free(descs[i]);
 	}
-		
+
 	fclose(fdatabase);
 	fclose(fquery);
 	fclose(fout);

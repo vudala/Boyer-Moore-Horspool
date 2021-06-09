@@ -4,22 +4,20 @@ LIBS=-fopenmp -lm
 
 CC=gcc
 
-RM=rm -f
+RM=rm
 
 EXEC=dna
-
-OBJS = dna.o
 
 all: $(EXEC)
 
 $(EXEC):
-	$(CC) $(FLAGS) dna.c -o $(EXEC) $(LIBS)
+	$(CC) $(FLAGS) dna.c utils.c -o $(EXEC) $(LIBS)
 
 run: all
 	./$(EXEC)
 
 clean:
-	$(RM) dna.o  dna.out
+	$(RM) dna.out
 
 purge: clean
 	$(RM) $(EXEC)

@@ -8,7 +8,7 @@ testar () {
     for i in $(seq 1 $END);
     do
         start=$(date +%s.%N)
-        ./dna
+        $2
         dur=$(echo "$(date +%s.%N) - $start" | bc)
         SUM=$(echo "$SUM + $dur" | bc)
     done
@@ -16,14 +16,4 @@ testar () {
     echo "scale=9; $SUM / $END" | bc
 }
 
-echo "1 core"
-testar 1
-
-echo "2 cores"
-testar 2
-
-echo "4 cores"
-testar 4
-
-echo "8 cores"
-testar 8
+testar 8 ./dna
